@@ -1,0 +1,22 @@
+PODS:
+  - FMDB (2.4):
+    - FMDB/standard (= 2.4)
+  - FMDB/common (2.4)
+  - FMDB/standard (2.4):
+    - FMDB/common
+  - NyaruDB (1.4.2)
+  - Realm (0.88.0):
+    - Realm/Headers (= 0.88.0)
+  - Realm/Headers (0.88.0)
+
+DEPENDENCIES:
+  - FMDB
+  - NyaruDB
+  - Realm
+
+SPEC CHECKSUMS:
+  FMDB: 0b2fa25e5264ef177973c0cb8c02c711107979aa
+  NyaruDB: 188fc7e865cf14c93258a80c20413ab0c734555c
+  Realm: 56fd06bf4e97da2829f864e2bca229a060825c61
+
+COCOAPODS: 0.35.0
