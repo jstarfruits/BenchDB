@@ -8,25 +8,17 @@
 
 #import "BDBRootViewController.h"
 
-#define BENCHMARK_START	NSDate *bench_to; NSDate *bench_from = [NSDate new]; NSLog(@"benchstart");
-#define BENCHMARK_PRINT bench_to = [NSDate new]; NSLog(@"benched %f Line %d in %@", [bench_to timeIntervalSinceDate:bench_from], __LINE__, [[self class] description]); bench_from = [NSDate new];
-
 @interface BDBRootViewController ()
-
-// Nyaru
-@property (nonatomic, strong) NyaruCollection *col;
-
-// FMDB
-@property (nonatomic, strong) FMDatabaseQueue *queue;
-
-// Realm
-@property (nonatomic, strong) RLMRealm *rm;
 
 @property (nonatomic, strong) NSOperationQueue *opq;
 
 @property (weak, nonatomic) IBOutlet UIProgressView *progress1;
 @property (weak, nonatomic) IBOutlet UIProgressView *progress2;
 @property (weak, nonatomic) IBOutlet UIProgressView *progress3;
+
+@property (weak, nonatomic) IBOutlet UILabel *timeLabel1;
+@property (weak, nonatomic) IBOutlet UILabel *timeLabel2;
+@property (weak, nonatomic) IBOutlet UILabel *timeLabel3;
 
 @property (weak, nonatomic) IBOutlet UISwitch *transactionSwitch;
 @property (weak, nonatomic) IBOutlet UISwitch *mainThreadSwitch;
@@ -63,16 +55,19 @@
 - (void)_startWithType:(BDBType)type {
 	BDBOperation *op;
 	UIProgressView *pv;
+	UILabel *label;
 	switch (type) {
 		case BDBTypeNyaru:
 			pv = self.progress2;
 			op = [[BDBNyaruDBOperation alloc] init];
+			label = self.timeLabel2;
 			
 			break;
 			
 		case BDBTypeRealm: {
 			pv = self.progress3;
 			op = [[BDBRealmOperation alloc] init];
+			label = self.timeLabel3;
 			
 			break;
 		}
@@ -80,20 +75,30 @@
 		default: // BDBTypeFMDB
 			pv = self.progress1;
 			op = [[BDBFMDBOperation alloc] init];
+			label = self.timeLabel1;
 			break;
 	}
 	
 	op.innerTransaction = self.transactionSwitch.on;
 	op.inMainThread = self.mainThreadSwitch.on;
 	
+	NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
+	fmt.dateFormat = @"mm:ss.SSS";
+	pv.progress = 0.0f;
+	
+	NSDate *start = [NSDate date];
+	label.text = @"0";
+	
 	if (op.inMainThread) {
 		op.num = 10000;
 		
 		[self _curNum:op.num];
 		
-		BENCHMARK_START;
 		[op start];
-		BENCHMARK_PRINT;
+		
+		[pv setProgress:1.0f animated:NO];
+		NSDate *d = [NSDate dateWithTimeIntervalSinceReferenceDate:-start.timeIntervalSinceNow];
+		label.text = [fmt stringFromDate:d];
 		return;
 	}
 	
@@ -102,10 +107,14 @@
 	
 	[op setProgressHandler:^(float progress) {
 		pv.progress = progress;
+		NSDate *d = [NSDate dateWithTimeIntervalSinceReferenceDate:-start.timeIntervalSinceNow];
+		label.text = [fmt stringFromDate:d];
 	}];
 	[op setCompletionBlock:^{
 		dispatch_async(dispatch_get_main_queue(), ^{
 			[pv setProgress:1.0f animated:YES];
+			NSDate *d = [NSDate dateWithTimeIntervalSinceReferenceDate:-start.timeIntervalSinceNow];
+			label.text = [fmt stringFromDate:d];
 		});
 	}];
 	
